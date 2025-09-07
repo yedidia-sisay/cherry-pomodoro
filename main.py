@@ -1,3 +1,4 @@
+from os import wait
 from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtCore import QTimer, QObject, Signal, Slot, Property, QUrl
@@ -60,6 +61,7 @@ class PomodoroController(QObject):
 
     @Slot()
     def resetTimer(self):
+        print("ehllow")
         self.timer.stop()
         self._isRunning = False
         self._remainingTime = 25 * 60 if self._isWorkMode else 5 * 60
