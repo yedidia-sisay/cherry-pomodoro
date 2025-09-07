@@ -13,13 +13,17 @@ class PomodoroController(QObject):
 
     def __init__(self):
         super().__init__()
-        self._remainingTime = 25 * 60  # Start with 25 minutes (work)
+        self._remainingTime = 25 * 60  # Default 25 minutes (work)
+        self._workDuration = 25 * 60   # Default work duration in seconds
+        self._restDuration = 5 * 60    # Default rest duration in seconds
         self._isWorkMode = True
         self._isRunning = False
         self._message = "Let's get crunchin'!"
         self.timer = QTimer()
         self.timer.setInterval(1000)  # 1 second
         self.timer.timeout.connect(self.updateTimer)
+
+
 
     @Property(int, notify=timeUpdated)
     def remainingTime(self):
@@ -41,7 +45,7 @@ class PomodoroController(QObject):
 
     @Property(str, notify=modeChanged)
     def ringColor(self):
-        return "crimson" if self._isWorkMode else "green"
+        return "crimson" if self._isWorkMode else "lightgreen"
 
     @Slot()
     def startTimer(self):
@@ -58,13 +62,22 @@ class PomodoroController(QObject):
             self.timer.stop()
             self._message = "Paused - catch your breath!"
             self.modeChanged.emit()
-
     @Slot()
     def resetTimer(self):
         self.timer.stop()
         self._isRunning = False
-        self._remainingTime = 25 * 60 if self._isWorkMode else 5 * 60
-        self._message = "Ready to start fresh!"
+        self._isWorkMode = not self._isWorkMode  # Switch to next mode
+        self._remainingTime = self._workDuration if self._isWorkMode else self._restDuration
+        self._message = "Switched to next mode - ready to start!"
+        self.timeUpdated.emit()
+        self.modeChanged.emit()
+
+    @Slot(int, int)
+    def setTimer(self, workMinutes, restMinutes):
+        self._workDuration = max(1, workMinutes) * 60  # Convert to seconds, minimum 1 minute
+        self._restDuration = max(1, restMinutes) * 60  # Convert to seconds, minimum 1 minute
+        self._remainingTime = self._workDuration if self._isWorkMode else self._restDuration
+        self._message = f"Set to {workMinutes} min work, {restMinutes} min rest!"
         self.timeUpdated.emit()
         self.modeChanged.emit()
 
@@ -74,7 +87,7 @@ class PomodoroController(QObject):
             self.timeUpdated.emit()
         else:
             self._isWorkMode = not self._isWorkMode
-            self._remainingTime = 25 * 60 if self._isWorkMode else 5 * 60
+            self._remainingTime =  self._workDuration if self._isWorkMode else self._restDuration
             self._message = "Crushed it! Time to chill!" if not self._isWorkMode else "Back to work, cereal winner!"
             self._isRunning = False
             self.timer.stop()

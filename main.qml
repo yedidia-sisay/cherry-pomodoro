@@ -61,7 +61,7 @@ ApplicationWindow {
                 ctx.arc(cx, cy, innerRadius, endAngle, startAngle, true);
                 ctx.closePath();
 
-                ctx.fillStyle = "crimson";
+                ctx.fillStyle = pomodoroController.ringColor;
                 ctx.fill();
                 ctx.strokeStyle = "crimson";
                 ctx.lineWidth = 2;
@@ -170,7 +170,7 @@ ApplicationWindow {
                                 if (sectorIndex === 0) pomodoroController.startTimer();
                                 else if (sectorIndex === 1) pomodoroController.pauseTimer();
                                 else if (sectorIndex === 2) pomodoroController.resetTimer();
-                                else if (sectorIndex === 3) console.log("Set button clicked");
+                                else if (sectorIndex === 3) setDialog.open();
                             } else {
                                 console.log("Click outside sector ring");
                             }
@@ -249,8 +249,8 @@ ApplicationWindow {
                 }
                 text: pomodoroController.message
                 font.pixelSize: 20
-                font.family: "Comic Sans MS"
-                color: "yellow"
+                font.family: digitalFont.name
+                color: "white"
                 opacity: 0
                 Behavior on opacity { NumberAnimation { duration: 500 } }
                 Connections {
@@ -264,6 +264,61 @@ ApplicationWindow {
                     id: messageFade
                     interval: 3000
                     onTriggered: messageDisplay.opacity = 0
+                }
+            }
+        }
+
+
+        Popup {
+            id: setDialog
+            anchors.centerIn: parent
+            width: 300
+            height: 200
+            modal: true
+            closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+            padding: 20
+
+            ColumnLayout {
+                anchors.fill: parent
+                spacing: 10
+
+                Label {
+                    text: "Set Durations (minutes)"
+                    font.pixelSize: 16
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                RowLayout {
+                    Label { text: "Work:"; font.pixelSize: 14 }
+                    TextInput {
+                        id: workInput
+                        validator: IntValidator { bottom: 1; top: 120 }
+                        text: "25"
+                        font.pixelSize: 14
+                        selectByMouse: true
+                    }
+                }
+
+                RowLayout {
+                    Label { text: "Rest:"; font.pixelSize: 14 }
+                    TextInput {
+                        id: restInput
+                        validator: IntValidator { bottom: 1; top: 120 }
+                        text: "5"
+                        font.pixelSize: 14
+                        selectByMouse: true
+                    }
+                }
+
+                Button {
+                    text: "Set"
+                    Layout.alignment: Qt.AlignHCenter
+                    onClicked: {
+                        let workMinutes = parseInt(workInput.text) || 25;
+                        let restMinutes = parseInt(restInput.text) || 5;
+                        pomodoroController.setTimer(workMinutes, restMinutes);
+                        setDialog.close();
+                    }
                 }
             }
         }
