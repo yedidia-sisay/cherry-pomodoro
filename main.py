@@ -61,7 +61,6 @@ class PomodoroController(QObject):
 
     @Slot()
     def resetTimer(self):
-        print("ehllow")
         self.timer.stop()
         self._isRunning = False
         self._remainingTime = 25 * 60 if self._isWorkMode else 5 * 60

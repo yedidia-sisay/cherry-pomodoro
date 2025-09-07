@@ -86,8 +86,10 @@ ApplicationWindow {
             width: outerRadius * 2
             height: outerRadius * 2
 
+            property var buttonItems: []
 
             Repeater {
+                id: buttonRepeater
                 model: sectorRing.count
                 delegate: Item {
                     id: buttonItem
@@ -142,58 +144,80 @@ ApplicationWindow {
                         }
                     }
 
-                MouseArea {
-                    id: buttonMouseArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onClicked: {
-                        let px = mouse.x;
-                        let py = mouse.y;
+                    function getSectorIndex(mouseX, mouseY) {
                         let cx = width / 2;
                         let cy = height / 2;
-                        let dx = px - cx;
-                        let dy = py - cy;
+                        let dx = mouseX - cx;
+                        let dy = mouseY - cy;
                         let angle = Math.atan2(dy, dx);
                         if (angle < 0) angle += 2 * Math.PI;
                         let radius = Math.sqrt(dx * dx + dy * dy);
                         if (radius >= sectorRing.innerRadius && radius <= sectorRing.outerRadius) {
                             let sectorIndex = Math.floor((angle / (2 * Math.PI)) * sectorRing.count);
-                            console.log("Clicked sector:", sectorIndex, "at angle:", angle * 180 / Math.PI);
-                            if (sectorIndex === 0) pomodoroController.startTimer();
-                            else if (sectorIndex === 1) pomodoroController.pauseTimer();
-                            else if (sectorIndex === 2) pomodoroController.resetTimer();
-                            else if (sectorIndex === 3) console.log("Set button clicked");
-                        } else {
-                            console.log("Click outside sector ring");
+                            return sectorIndex;
                         }
-                    }
-                    onPositionChanged: {
-                        let px = mouse.x;
-                        let py = mouse.y;
-                        let cx = width / 2;
-                        let cy = height / 2;
-                        let dx = px - cx;
-                        let dy = py - cy;
-                        let angle = Math.atan2(dy, dx);
-                        if (angle < 0) angle += 2 * Math.PI;
-                        let radius = Math.sqrt(dx * dx + dy * dy);
-                        let isHovering = (radius >= sectorRing.innerRadius && radius <= sectorRing.outerRadius &&
-                                         angle >= startAngle && angle < endAngle);
-                        buttonItem.scale = isHovering ? 1.1 : 1.0;
-                    }
-                    onExited: buttonItem.scale = 1.0
-                    Behavior on scale { NumberAnimation { duration: 200 } }
+                        return -1; // Outside the ring
                     }
 
+                    MouseArea {
+                        id: buttonMouseArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked: {
+                            let sectorIndex = getSectorIndex(mouse.x, mouse.y);
+                            if (sectorIndex >= 0) {
+                                console.log("Clicked sector:", sectorIndex, "at angle:", Math.atan2(mouse.y - height / 2, mouse.x - width / 2) * 180 / Math.PI);
+                                if (sectorIndex === 0) pomodoroController.startTimer();
+                                else if (sectorIndex === 1) pomodoroController.pauseTimer();
+                                else if (sectorIndex === 2) pomodoroController.resetTimer();
+                                else if (sectorIndex === 3) console.log("Set button clicked");
+                            } else {
+                                console.log("Click outside sector ring");
+                            }
+                        }
+                        onPositionChanged: {
+                            let sectorIndex = getSectorIndex(mouse.x, mouse.y);
+                            console.log("Hover sector:", sectorIndex, "current index:", index);
+                            // Reset all buttons to normal scale
+                            for (let i = 0; i < sectorRing.count; i++) {
+                                let btn = sectorRing.getButton(i);
+                                if (btn) btn.scale = 1.0;
+                            }
 
+                            // Set the hovered button to scaled state
+                            if (sectorIndex >= 0) {
+                                let hoveredButton = sectorRing.getButton(sectorIndex);
+                                if (hoveredButton) hoveredButton.scale = 1.1;
+                            }
+                        }
+                        onExited: {
+                            let sectorIndex = getSectorIndex(mouse.x, mouse.y);
+                            if (sectorIndex < 0) {
+                                for (let i = 0; i < sectorRing.count; i++) {
+                                    let btn = sectorRing.getButton(i);
+                                    if (btn) btn.scale = 1.0;
+                                }
+                            }
+                        }
+                        Behavior on scale { NumberAnimation { duration: 200 } }
 
+                    }
 
+                    Component.onCompleted: {
+                        sectorRing.buttonItems.push(buttonItem);
+                    }
                 }
+            }
+
+            function getButton(index) {
+                if (index >= 0 && index < buttonItems.length) {
+                    return buttonItems[index];
+                }
+                return null;
             }
         }
 
 
-        
 
         // Center circle
         Rectangle {
