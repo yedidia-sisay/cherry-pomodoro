@@ -56,15 +56,15 @@ When a session ends, it auto-starts the next one and sends a notification.
 
 
 ## Tech Stack
-Python 3 with PySide6 for backend logic.
-QML for the UI (Qt Quick).
-Subprocess for notifications.
+- Python 3 with PySide6 for backend logic.
+- QML for the UI (Qt Quick).
+- Subprocess for notifications.
 
 
 
 ## Future Improvements
-a load of things
-I'm trying to build a widgets based digita world filled with digital objects that one can interact with eachother, and the user. So defining the API for that.
-Add sound alerts.
-Long breaks after 4 cycles.
-Session logging for daily activity tracking.
+- a load of things
+- I'm trying to build a widgets based digital world filled with digital objects. Where the objects can interact with eachother, and the user. So defining the API for that.
+- Add sound alerts.
+- Long breaks after 4 cycles.
+- Session logging for daily activity tracking.
