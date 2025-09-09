@@ -5,6 +5,7 @@ from PySide6.QtCore import QTimer, QObject, Signal, Slot, Property, QUrl
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 import sys
+import subprocess
 
     
 class PomodoroController(QObject):
@@ -18,12 +19,21 @@ class PomodoroController(QObject):
         self._restDuration = 5 * 60    # Default rest duration in seconds
         self._isWorkMode = True
         self._isRunning = False
+        self._autoStart = True
         self._message = "Let's get crunchin'!"
         self.timer = QTimer()
         self.timer.setInterval(1000)  # 1 second
         self.timer.timeout.connect(self.updateTimer)
 
 
+    @Property(bool, notify=modeChanged)
+    def autoStart(self):
+        return self._autoStart
+
+    @autoStart.setter
+    def autoStart(self, value):
+        self._autoStart = value
+        self.modeChanged.emit()
 
     @Property(int, notify=timeUpdated)
     def remainingTime(self):
@@ -81,19 +91,34 @@ class PomodoroController(QObject):
         self.timeUpdated.emit()
         self.modeChanged.emit()
 
+
     def updateTimer(self):
         if self._remainingTime > 0:
             self._remainingTime -= 1
             self.timeUpdated.emit()
         else:
             self._isWorkMode = not self._isWorkMode
-            self._remainingTime =  self._workDuration if self._isWorkMode else self._restDuration
+            self._remainingTime = self._workDuration if self._isWorkMode else self._restDuration
             self._message = "Crushed it! Time to chill!" if not self._isWorkMode else "Back to work, cereal winner!"
-            self._isRunning = False
-            self.timer.stop()
+            self.send_notification("Pomodoro Session Complete",
+                                  f"{'Work' if not self._isWorkMode else 'Rest'} session ended!")
+            if self._autoStart:
+                self._isRunning = True
+                self.timer.start()
+            else:
+                self._isRunning = False
+                self.timer.stop()
             self.timeUpdated.emit()
             self.modeChanged.emit()
 
+    def send_notification(self, title, message):
+        """Send a desktop notification using notify-send."""
+        try:
+            subprocess.run(['notify-send', title, message], check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to send notification: {e}")
+        except FileNotFoundError:
+            print("notify-send not found. Please ensure it is installed or use a notification daemon like dunst.")
 
 
 def main():

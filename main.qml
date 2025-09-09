@@ -1,3 +1,4 @@
+
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -7,7 +8,6 @@ ApplicationWindow {
     width: 700
     height: 700
     title: "Circular Layout UI"
-
 
     FontLoader {
         id: digitalFont
@@ -20,14 +20,33 @@ ApplicationWindow {
         property real size: Math.min(parent.width, parent.height) * 0.5
         width: size
         height: size
-        // Ring of circular buttons
 
+        // Draggable behavior
+        MouseArea {
+            id: dragArea
+            anchors.fill: parent
+            drag.target: pomodoro_timer
+            drag.axis: Drag.XandYAxis
+            drag.minimumX: 0
+            drag.minimumY: 0
+            drag.maximumX: parent.width - pomodoro_timer.width
+            drag.maximumY: parent.height - pomodoro_timer.height
+
+            onPressed: {
+                pomodoro_timer.z = 10; // Bring to front while dragging
+            }
+            onReleased: {
+                pomodoro_timer.z = 0; // Reset z-order
+            }
+        }
+
+        // Ring of circular buttons
         // Progress ring as a proper ring segment
         Canvas {
             id: progressRing
             anchors.centerIn: parent
             
-            property real lineWidth:  40  // just outside the center circle
+            property real lineWidth: 40  // just outside the center circle
             property real innerRadius: timer_area.width / 2    // just outside the center circle
             readonly property real outerRadius: innerRadius + lineWidth           // thickness of the ring
             property real progress: pomodoroController.remainingTime / (pomodoroController.isWorkMode ? 25*60 : 5*60)
@@ -38,7 +57,6 @@ ApplicationWindow {
 
             onProgressChanged: requestPaint()
             Behavior on progress { NumberAnimation { duration: 1000 } }
-
 
             onPaint: {
                 var ctx = getContext("2d");
@@ -61,15 +79,13 @@ ApplicationWindow {
                 ctx.arc(cx, cy, innerRadius, endAngle, startAngle, true);
                 ctx.closePath();
 
-                ctx.fillStyle = pomodoroController.ringColor;
+                ctx.fillStyle = pomodoroController.ringColor; // Assuming ringColor is exposed
                 ctx.fill();
                 ctx.strokeStyle = "crimson";
                 ctx.lineWidth = 2;
                 ctx.stroke();
             }
         }
-
-
 
         
         // Ring of sector buttons
@@ -97,7 +113,6 @@ ApplicationWindow {
                     height: sectorRing.height
                     property real startAngle: (index / sectorRing.count) * 2 * Math.PI
                     property real endAngle: ((index + 1) / sectorRing.count) * 2 * Math.PI
-
 
                     Canvas {
                         id: buttonCanvas
@@ -200,7 +215,6 @@ ApplicationWindow {
                             }
                         }
                         Behavior on scale { NumberAnimation { duration: 200 } }
-
                     }
 
                     Component.onCompleted: {
@@ -217,11 +231,8 @@ ApplicationWindow {
             }
         }
 
-
-
         // Center circle
         Rectangle {
-
             id: timer_area
             property real size: Math.min(parent.width, parent.height) * 0.5
             width: size
@@ -267,7 +278,6 @@ ApplicationWindow {
                 }
             }
         }
-
 
         Popup {
             id: setDialog
@@ -322,12 +332,5 @@ ApplicationWindow {
                 }
             }
         }
-
-
-
     }
 }
-
-
-
-
